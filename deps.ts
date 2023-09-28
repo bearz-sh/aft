@@ -63,3 +63,4 @@ export type { IComposeDownArgs, IComposeUpArgs } from "https://deno.land/x/quasa
 export { SecretGenerator } from "https://deno.land/x/quasar@0.0.5/secrets/generator.ts";
 export * from "https://deno.land/x/quasar@0.0.5/secrets/mod.ts";
 export { sops } from "https://deno.land/x/quasar@0.0.5/shell/sops/mod.ts";
+export { WriteLevel } from "https://deno.land/x/quasar@0.0.5/fmt/host_writer.ts";

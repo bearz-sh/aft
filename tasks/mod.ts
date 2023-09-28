@@ -113,7 +113,7 @@ async function walk(src: string, dest: string, hb: typeof handlebars, locals: Re
     }
 }
 
-export async function unpack(ctx: IPackageExecutionContext, valueFiles?: string[], secretsFile?: string) {
+export async function unpack(ctx: IPackageExecutionContext, valueFiles?: string[], secretsFile?: string, inspect= false) {
     const vb = new ValueBuilder();
     vb.addDefaults(ctx);
     await vb.addYamlFile(ctx.package.valuesFile);
@@ -122,7 +122,13 @@ export async function unpack(ctx: IPackageExecutionContext, valueFiles?: string[
     }
 
     const locals = vb.build();
-    ctx.host.debug(JSON.stringify(locals, null, 4));
+    if (inspect)
+    {
+        ctx.host.info("Values:");
+        ctx.host.writeLine(JSON.stringify(locals, null, 4));
+        ctx.host.writeLine();
+    }
+       
     const composeFile = ctx.package.composeFile;
     const service = ctx.package.spec.service ?? ctx.package.spec.name;
     const composeDir = join(ctx.config.paths.data, "etc", "compose", service);
@@ -137,6 +143,15 @@ export async function unpack(ctx: IPackageExecutionContext, valueFiles?: string[
     const dir = dirname(composeFile);
     const content = hbs.compile(template)(locals);
     const outFile = join(composeDir, "compose.yaml");
+
+    if (inspect)
+    {
+        ctx.host.info("compose.yaml:");
+        ctx.host.writeLine(content);
+        ctx.host.writeLine();
+    }
+        
+
     await writeTextFile(outFile, content);
 
     if (locals.volumes) {

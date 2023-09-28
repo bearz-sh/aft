@@ -42,6 +42,11 @@ export function createDefaults() {
     return settings;
 }
 
+export function getLocation() {
+    const dir = paths.userConfigDir;
+    return join(dir, "aft.config");
+}
+
 export async function load(path?: string) {
     let dir = "";
     if (path === undefined) {

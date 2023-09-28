@@ -48,6 +48,24 @@ export async function setupLocalCerts(ctx: IExecutionContext) {
     return { cert, chained, key };
 }
 
+export async function check(ctx: IExecutionContext) {
+    const tools = ["docker", "mkcert", "age", "sops"];
+
+    const toolsEnabled: Record<string, boolean> = {
+        "docker": true,
+        "mkcert": true,
+        "age": true,
+        "sops": true,
+    };
+
+    for (const tool of tools) {
+        if (!await which(tool)) {
+            ctx.host.warn(`${tool} not installed.`);
+            toolsEnabled[tool] = false;
+        }
+    }
+}
+
 export async function setup(ctx: IExecutionContext) {
     const tools = ["docker", "mkcert", "age", "sops"];
 

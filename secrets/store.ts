@@ -15,6 +15,12 @@ import {
 import { ISecretStore } from "../interfaces.ts";
 import { load } from "../config/mod.ts";
 
+export async function getKdbxLocation() {
+    const config = await load();
+    const dir = get("AFT_KEEPASS") || join(config.paths.data, "etc");
+    return join(dir, "aft.kdbx");
+}
+
 export async function getOrCreateKey() {
     const envKey = get("AFT_KEEPASS_KEY");
 
