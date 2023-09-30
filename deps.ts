@@ -24,6 +24,8 @@ export {
     readTextFileSync,
     writeFile,
     writeTextFile,
+    rm,
+    rmSync
 } from "https://deno.land/x/quasar@0.0.5/fs/mod.ts";
 export { deepMerge, parseYaml } from "https://deno.land/x/quasar@0.0.5/deps.ts";
 export {
@@ -64,3 +66,4 @@ export { SecretGenerator } from "https://deno.land/x/quasar@0.0.5/secrets/genera
 export * from "https://deno.land/x/quasar@0.0.5/secrets/mod.ts";
 export { sops } from "https://deno.land/x/quasar@0.0.5/shell/sops/mod.ts";
 export { WriteLevel } from "https://deno.land/x/quasar@0.0.5/fmt/host_writer.ts";
+export * as semver from "https://deno.land/std@0.200.0/semver/mod.ts";

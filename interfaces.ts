@@ -6,6 +6,19 @@ export interface IAftDefaultNetwork {
     name: string;
 }
 
+export interface IPackageCacheEntry {
+    name: string;
+    version: string;
+    packageDir: string;
+    composeDir: string;
+    valuesFiles: string[];
+    secretsFile: string;
+}
+
+export interface IPackageCache {
+    entries: IPackageCacheEntry[];
+}
+
 export interface IAftConfig extends Record<string, unknown> {
     defaults: {
         dns: {
@@ -14,7 +27,7 @@ export interface IAftConfig extends Record<string, unknown> {
         };
         tz: string;
         puid: number;
-        guid: number;
+        pgid: number;
         networks: Record<string, IAftDefaultNetwork>;
     };
     paths: {
@@ -63,11 +76,13 @@ export interface ISecretsImportSection extends Record<string, string | undefined
 }
 
 export interface IExecutionContext {
-    secretStore: ISecretStore;
-    config: IAftConfig;
-    host: IHostWriter;
+    readonly secretStore: ISecretStore;
+    readonly config: IAftConfig;
+    readonly host: IHostWriter;
+    readonly cache: IPackageCache;
+    readonly globalPackagesDir: string;
 }
 
 export interface IPackageExecutionContext extends IExecutionContext {
-    package: IAftPackage;
+    readonly package: IAftPackage;
 }

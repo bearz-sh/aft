@@ -9,10 +9,11 @@ import {
     kdbx,
     KpDatabase,
     readFile,
+    readTextFile,
     secretGenerator,
     writeFile,
 } from "../deps.ts";
-import { ISecretStore } from "../interfaces.ts";
+import { ISecretsImportSection, ISecretStore } from "../interfaces.ts";
 import { load } from "../config/mod.ts";
 
 export async function getKdbxLocation() {
@@ -51,6 +52,10 @@ export class KeePassSecretStore implements ISecretStore {
         this.#db = db;
     }
 
+    get db() {
+        return this.#db;
+    }
+
     async get(path: string): Promise<string | undefined> {
         const entry = await this.#db.findEntry(path, true);
         if (!entry) {
@@ -83,14 +88,25 @@ export class KeePassSecretStore implements ISecretStore {
     list(): Promise<string[]> {
         const names: string[] = [];
         for (const entry of this.#db.db.getDefaultGroup().allEntries()) {
-            const v = entry.fields.get("Password");
+            const tree : string[] = [];
+            let parent = entry.parentGroup;
+            while(parent) {
+                if (!parent || !parent.name || parent.name === "Root" ) {
+                    break;
+                }
+                tree.push(parent.name);
+                parent = parent.parentGroup;
+            }
+            tree.pop();
+            tree.reverse();
+            const v = entry.fields.get("Title");
             if (typeof v === "string") {
-                names.push(v);
+                names.push(`${tree.join("/")}/${v}`);
                 continue;
             }
 
             if (v instanceof kdbx.ProtectedValue) {
-                names.push(v.getText());
+                names.push(`${tree.join("/")}/${v.getText()}`);
                 continue;
             }
         }
@@ -100,10 +116,11 @@ export class KeePassSecretStore implements ISecretStore {
 }
 
 let secretStore: ISecretStore | undefined = undefined;
+let defaultKdbx: KpDatabase | undefined = undefined;
 
-export async function getOrCreateDefaultStore() {
-    if (secretStore) {
-        return secretStore;
+export async function getOrCreateDefaultKdbx() {
+    if (defaultKdbx) {
+        return defaultKdbx;
     }
 
     const config = await load();
@@ -115,12 +132,70 @@ export async function getOrCreateDefaultStore() {
     const secret = await getOrCreateKey();
     const credentials = createKdbxCredentials(secret);
     if (await exists(kdbxFile)) {
-        const existingDb = await KpDatabase.open(kdbxFile, credentials);
-        secretStore = new KeePassSecretStore(existingDb);
+        defaultKdbx = await KpDatabase.open(kdbxFile, credentials);
+       
     } else {
-        const newDb = await KpDatabase.create(kdbxFile, credentials);
-        secretStore = new KeePassSecretStore(newDb);
+        defaultKdbx = await KpDatabase.create(kdbxFile, credentials);
     }
+
+    return defaultKdbx;
+}
+
+export async function importSecrets(importFile: string, overwrite = false) {
+    
+    if (!await exists(importFile)) {
+        throw new Error(`Import file ${importFile} does not exist`);
+    }
+
+    const content = await readTextFile(importFile);
+    const unknownJson = JSON.parse(content);
+    if (!Array.isArray(unknownJson)) {
+        throw new Error(`Import file ${importFile} is not a valid JSON array`);
+    }
+
+    const records = unknownJson as ISecretsImportSection[];
+    const db = await getOrCreateDefaultKdbx();
+
+    for(let i = 0; i < records.length; i++) {
+        const r = records[i];
+        if (!r.path) {
+            throw new Error(`Import file ${importFile} record ${i} has no path`);
+        }
+
+        if (!r.password) {
+            throw new Error(`Import file ${importFile} record ${i} has no password`);
+        }
+
+        const entry = await db.getEntry(r.path);
+        if (entry && !overwrite) {
+            hostWriter.warn(`Secret ${r.path} already exists`);
+            continue;
+        }
+
+        entry.fields.set("Password", kdbx.ProtectedValue.fromString(r.password));
+        if (r.url) {
+            entry.fields.set("URL", r.url);
+        }
+
+        if (r.notes) {
+            entry.fields.set("Notes", r.notes);
+        }
+
+        if (r.username) {
+            entry.fields.set("UserName", r.username);
+        }
+    }
+
+    await db.save();
+}
+
+export async function getOrCreateDefaultStore() {
+    if (secretStore) {
+        return secretStore;
+    }
+
+    const db = await getOrCreateDefaultKdbx();
+    secretStore = new KeePassSecretStore(db);
 
     return secretStore;
 }

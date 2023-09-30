@@ -1,0 +1,16 @@
+restart: unless-stopped
+hostname: gotify
+dns:
+  subdomain: gotify
+
+# only used if traefik is disabled
+ports:
+  default: 44350
+
+traefik: true
+watchtower: true
+
+networks:
+  default:
+    assignIp: true
+    suffix: "0.50"

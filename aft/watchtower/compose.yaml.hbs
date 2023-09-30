@@ -1,0 +1,39 @@
+services:
+  watchtower:
+    image: {{ image.name }}:{{ image.tag }}
+    container_name: {{ services }}
+    hostname: {{ hostname }}
+    restart: {{ restart }}
+    environment:
+      TZ: {{ tz }}
+      PUID: {{ puid }}
+      PGID: {{ pgid }}
+      WATCHTOWER_CLEANUP: {{ watchtower.cleanup }}
+      WATCHTOWER_LABEL_ENABLE: {{ watchtower.enableLabel }}
+      WATCHTOWER_MONITOR_ONLY: {{ watchtower.monitor.only }}
+{{#if watchtower.pollInterval}}
+      WATCHTOWER_POLL_INTERVAL: {{ watchtower.pollInterval }}
+{{/if}}
+      WATCHTOWER_SCHEDULE: {{watchtower.schedule }}
+{{#if watchtower.notifications.url}}
+      WATCHTOWER_NOTIFICATION_URL: {{ watchtower.notifications.url }}
+{{else}}
+      WATCHTOWER_NOTIFICATION_URL: "gotify://gotify.{{ dns.domain}}:{{ watchtower.gotifyPort }}/${GOTIFY_TOKEN}"
+{{/if}}
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+{{#if networks.default.assignIp }}
+      aft-vnet:
+        ipv4_address: {{ networks.default.cidr.[0] }}.{{ networks.default.cidr.[1] }}.{{ networks.default.suffix }}
+{{else}}
+      - aft-vnet
+{{/if}}
+
+networks:
+  aft-vnet:
+    external: true
+    name: {{ networks.default.name }}

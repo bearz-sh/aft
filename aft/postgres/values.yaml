@@ -1,0 +1,24 @@
+restart: unless-stopped
+command: |
+  --save 20 1 --loglevel warning
+hostname: postgres
+
+ports:
+  default: 5432
+dns:
+  subdomain: traefik
+
+postgres:
+  user: aft_user
+  db: aft
+
+healthcheck:
+  timeout: 45s
+  interval: 10s
+  retries: 10
+  startPeriod: 30s
+
+networks:
+  default:
+    assignIp: true
+    suffix: "0.30"

@@ -1,0 +1,10 @@
+name: postgres
+description: |
+  The open source, in-memory data store used by millions of developers
+  as a database, cache, streaming engine, and message broker.
+service: postgres
+version: "0.0.1"
+site: https://www.postgresql.org/
+image: 
+  name: postgres
+  tag: latest

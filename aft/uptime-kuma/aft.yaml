@@ -1,0 +1,9 @@
+name: uptime-kuma
+description: |
+  A self-hosted monitoring tool
+service: uptime-kuma
+version: "0.0.1"
+site: https://uptime.kuma.pet/
+image: 
+  name: louislam/uptime-kuma
+  tag: 1

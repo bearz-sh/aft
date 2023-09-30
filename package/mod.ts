@@ -1,4 +1,4 @@
-import { dirname, join, parseYaml, readTextFile, readTextFileSync } from "../deps.ts";
+import { dirname, join, parseYaml, readTextFile, readTextFileSync, resolve } from "../deps.ts";
 import { IAftPackage, IAftSpec } from "./interfaces.ts";
 
 export class AftPackage implements IAftPackage {
@@ -9,9 +9,9 @@ export class AftPackage implements IAftPackage {
     readonly composeFile: string;
 
     constructor(file: string, spec: IAftSpec) {
-        this.file = file;
+        this.file = resolve(file);
         this.spec = spec;
-        const dir = dirname(file);
+        const dir = dirname(this.file);
         this.secretsFile = join(dir, "secrets.yaml");
         this.valuesFile = join(dir, "values.yaml");
         this.composeFile = join(dir, "compose.yaml.hbs");

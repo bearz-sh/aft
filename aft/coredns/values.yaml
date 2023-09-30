@@ -1,0 +1,17 @@
+
+restart: unless-stopped
+command: |
+  -conf /root/Corefile
+
+host:
+  ip: 127.0.0.1
+
+dns:
+  tls: true
+  certs: "/etc/certs/aft.pem /etc/certs/aft.key.pem /etc/certs/rootCA.pem"
+  forward: ". tls://1.1.1.1"
+
+networks:
+  default:
+    assignIp: true
+    suffix: "0.3"

@@ -1,0 +1,18 @@
+restart: unless-stopped
+hostname: watchtower
+
+watchtower:
+  cleanup: true
+  monitorOnly: false
+  schedule: "0 0 4 * * MON"
+  pollInterval: null
+  enableLabel: true
+   gotifyPort: 443
+  notifications:
+    url: null
+   
+
+networks:
+  default:
+    assignIp: true
+    suffix: "0.4"

@@ -1,16 +1,17 @@
 services:
   traefik:
     image: {{{ image.name }}}:{{ image.tag }}
-    container_name: {{ name }}
-    restart: unless-stopped
+    container_name: {{ service }}
+    hostname: {{ hostname }}
+    restart: {{ restart }}
     ports:
       - "{{ host.ip }}:80:80"
       - "{{ host.ip }}:443:443"
       - "{{ host.ip }}:8080:8080"
     environment:
       TZ: "{{ tz }}"
-      PUID: "{{ puid }}"
-      GUID: "{{ guid }}"
+      PUID: {{ puid }}
+      PGID: {{ pgid }}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 {{#if ca.selfSigned}}
@@ -28,7 +29,12 @@ services:
       - "traefik.http.services.{{ name }}.loadbalancer.sticky.cookie.httpOnly=true"
       - "traefik.http.services.{{ name }}.loadbalancer.sticky.cookie.secure=true"
     networks:
+{{#if networks.default.assignIp }}
+      aft-vnet:
+        ipv4_address: {{ networks.default.cidr.[0] }}.{{ networks.default.cidr.[1] }}.{{ networks.default.suffix }}
+{{else}}
       - aft-vnet
+{{/if}}
 
 networks:
   aft-vnet:

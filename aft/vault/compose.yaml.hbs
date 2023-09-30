@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  vault:
+    image: {{ image.name }}:{{ image.tag }}
+    container_name: {{ service }}
+    hostname: {{ hostname }}
+    restart: {{ restart }}
+    command: "{{ command }}"
+    environment:
+      TZ: {{ tz }}
+      PUID: {{ puid }}
+      GUID: {{ pgid }}
+      VAULT_ADDR: {{ vault.addr }}
+      VAULT_API_ADDR: {{ vault.api.addr }}
+    cap_add:
+      - IPC_LOCK
+    expose:
+      - {{ ports.default }}
+{{#unless traefik}}
+    ports:
+      - "{{ ports.default }}:8200"
+    volumes:
+      - {{ volumes.data}}/file:/vault/file:rw
+      - {{ volumes.etc }}:/config:rw
+    labels:
+{{#if traefik }}
+      - "traefik.enable=true"
+      - "traefik.http.routers.{{ service }}.rule=Host(`{{ dns.subdomain }}.{{ dns.domain }}`)"
+      - "traefik.http.routers.{{ service }}.entrypoints=https"
+      - "traefik.http.routers.{{ service }}.tls=true"
+      - "traefik.http.services.{{ service }}.loadbalancer.server.port={{ ports.default }}"
+{{/if}}
+{{#if watchtower }}
+      - "com.centurylinklabs.watchtower.enable=true"
+{{/if}}
+    networks:
+{{#if networks.default.assignIp }}
+      aft-vnet:
+        ipv4_address: {{ networks.default.cidr.0 }}.{{ networks.default.cidr.1 }}.{{ networks.default.suffix }}
+{{else}}
+      - aft-vnet
+{{/if}}
+
+  vault-client:
+    build: .
+    container_name: "{{ service }}-client"
+    environment:
+      TZ: {{ tz }}
+      PUID: {{ puid }}
+      GUID: {{ pgid }}
+      VAULT_HOST: {{ hostname}}
+      VAULT_CLIENT_SLEEP: {{ vault.client.sleep }}
+    volumes:
+      - {{ volumes.data }}/keys:/data/keys:rw
+    networks:
+      - aft-vnet
+
+networks:
+  aft-vnet:
+    external: true
+    name: {{ networks.default.name }}

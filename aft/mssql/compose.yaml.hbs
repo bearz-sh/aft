@@ -1,0 +1,40 @@
+services:
+  mssql:
+    image: {{ image.name }}:{{ image.tag }}
+    container_name: {{ service }}
+    hostname: {{ hostname }}
+    restart: {{ restart }}
+{{#if memory.limit }}
+    mem_limit: {{ memory.limit }}
+{{/if}}
+    environment:
+      TZ: {{ tz }}
+      PUID: {{ puid }}
+      PGID: {{ pgid }}
+      SA_PASSWORD: "${MSSQL_PASSWORD:-CHANGEm3!}"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: {{ mssql.pid }}
+    ports:
+      - "{{ ports.default }}:1433"
+    volumes:
+      - "{{ volumes.data }}:/var/opt/mssql/data"
+
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S",  "localhost", "-U", "sa", "-P", "${MSSQL_PASSWORD:-CHANGEm3!}", "-Q", "SELECT 1"]
+      timeout: {{ healthcheck.timeout }}
+      interval: {{ healthcheck.interval }}
+      retries: {{ healthcheck.retries }}
+      start_period: {{ healthcheck.startPeriod }}
+
+    networks:
+{{#if networks.default.assignIp }}
+      aft-vnet:
+        ipv4_address: {{ networks.default.cidr.[0] }}.{{ networks.default.cidr.[1] }}.{{ networks.default.suffix }}
+{{else}}
+      - aft-vnet
+{{/if}}
+
+networks:
+  aft-vnet:
+    external: true
+    name: {{ networks.default.name }}

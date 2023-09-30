@@ -7,6 +7,7 @@ import {
     exists,
     expand,
     handlebars,
+    hostWriter,
     IComposeDownArgs,
     IComposeUpArgs,
     join,
@@ -22,11 +23,14 @@ import {
 } from "../deps.ts";
 import { ValueBuilder } from "../_value_builder.ts";
 import { IPackageExecutionContext, ISecretsSection } from "../interfaces.ts";
+import { savePackageCache } from "../config/mod.ts";
 
 async function generateEnvFile(ctx: IPackageExecutionContext, vb: ValueBuilder, secretsFile?: string) {
     secretsFile ??= ctx.package.secretsFile;
 
+    console.log("secretsFile", secretsFile);
     if (!await exists(secretsFile)) {
+        console.log("no secrets file");
         return;
     }
 
@@ -35,31 +39,34 @@ async function generateEnvFile(ctx: IPackageExecutionContext, vb: ValueBuilder, 
     const envFile = join(composeDir, ".env");
 
     const content = await readTextFile(secretsFile);
+    console.log(content);
     const sections = parseYaml(content) as ISecretsSection[];
+    console.log(sections);
     let envText = "";
     const env: Record<string, string | undefined> = {};
     for (let i = 0; i < sections.length; i++) {
         const s = sections[i];
+        console.log(s);
         if (!s.path || s.path.length === 0) {
             ctx.host.warn(`Secrets section ${i} has no path`);
             continue;
         }
         let secret = await ctx.secretStore.get(s.path);
-        if (secret === undefined) {
+        if (secret === undefined || secret === null || secret === "") {
             if (s.default) {
                 secret = s.default;
                 await ctx.secretStore.set(s.path, secret);
-            }
-
-            if (!s.create) {
-                ctx.host.warn(`Secret ${s.path} has no value`);
-                continue;
-            }
-
-            const sg = new SecretGenerator();
-            sg.addDefaults();
-            secret = sg.generate(s.length ?? 16);
-            await ctx.secretStore.set(s.path, secret);
+            } else {
+                if (!s.create) {
+                    ctx.host.warn(`Secret ${s.path} has no value`);
+                    continue;
+                }
+    
+                const sg = new SecretGenerator();
+                sg.addDefaults();
+                secret = sg.generate(s.length ?? 16);
+                await ctx.secretStore.set(s.path, secret);
+            }          
         }
 
         secretMasker.add(secret);
@@ -121,6 +128,7 @@ export async function unpack(ctx: IPackageExecutionContext, valueFiles?: string[
         await vb.addYamlFile(valueFiles);
     }
 
+    secretsFile ??= ctx.package.secretsFile;
     const locals = vb.build();
     if (inspect)
     {
@@ -130,7 +138,10 @@ export async function unpack(ctx: IPackageExecutionContext, valueFiles?: string[
     }
        
     const composeFile = ctx.package.composeFile;
-    const service = ctx.package.spec.service ?? ctx.package.spec.name;
+    const service = (locals.service ?? locals.name) as string | undefined;
+    if (!service) {
+        throw new Error("No service name specified. Ensure that the values file contains a service or name property");
+    }
     const composeDir = join(ctx.config.paths.data, "etc", "compose", service);
 
     await ensureDirectory(composeDir);
@@ -143,6 +154,33 @@ export async function unpack(ctx: IPackageExecutionContext, valueFiles?: string[
     const dir = dirname(composeFile);
     const content = hbs.compile(template)(locals);
     const outFile = join(composeDir, "compose.yaml");
+    const packageDir = dirname(ctx.package.file);
+    
+    let cacheEntry = ctx.cache.entries.find((e) => e.name === service);
+    if (!cacheEntry) {
+        cacheEntry = {
+            packageDir: packageDir,
+            composeDir: dir,
+            name: service,
+            version: ctx.package.spec.version,
+            valuesFiles: [ctx.package.valuesFile, ...valueFiles ?? []],
+            secretsFile: secretsFile,
+        };
+        ctx.cache.entries.push(cacheEntry);
+    } else {
+        cacheEntry.packageDir = packageDir;
+        cacheEntry.composeDir = dir;
+        cacheEntry.version = ctx.package.spec.version;
+        cacheEntry.valuesFiles = [ctx.package.valuesFile, ...valueFiles ?? []];
+        cacheEntry.secretsFile = secretsFile;
+    }
+
+    await savePackageCache(ctx.cache);
+
+    const dockerFile = join(dir, "Dockerfile");
+    if (await exists(dockerFile)) {
+        await copy(dockerFile, join(composeFile, "Dockerfile"), { overwrite: true });
+    }
 
     if (inspect)
     {
@@ -189,7 +227,10 @@ export async function up(ctx: IPackageExecutionContext) {
         ctx.config.sops.recipient !== undefined &&
         await which("sops") !== undefined;
 
+        console.log("env", envFile);
+        hostWriter.debug(`useSops: ${useSops}. enabled: ${ctx.config.sops.enabled}, recipient: ${ctx.config.sops.recipient}`);
     if (await exists(envFile)) {
+        console.log()
         args.envFile = [envFile];
 
         if (useSops) {
@@ -225,6 +266,7 @@ export async function down(ctx: IPackageExecutionContext) {
         ctx.config.sops.recipient !== undefined &&
         await which("sops") !== undefined;
 
+        hostWriter.debug(`useSops: ${useSops}. enabled: ${ctx.config.sops.enabled}, recipient: ${ctx.config.sops.recipient}`);
     if (await exists(envFile)) {
         args.envFile = [envFile];
 

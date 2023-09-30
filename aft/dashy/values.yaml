@@ -1,0 +1,25 @@
+restart: unless-stopped
+hostname: dashy
+dns:
+  subdomain: dashy
+
+ports:
+  default: 44351
+
+node:
+  env: production
+  port: 3000
+
+traefik: true
+watchtower: true
+
+healthcheck:
+  interval: 1m30s
+  timeout: 10s
+  retries: 3
+  startPeriod: 40s
+
+networks:
+  default:
+    assignIp: true
+    suffix: "0.51"

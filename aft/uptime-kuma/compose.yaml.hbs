@@ -1,0 +1,39 @@
+services:
+  uptime-kuma:
+    image: {{ image.name }}:{{ image.tag }}
+    container_name: {{ service }}
+    hostname: {{ hostname }}
+    restart: {{ restart }}
+    environment:
+      TZ: {{ tz }}
+      PUID: {{ puid }}
+      PGID: {{ pgid }}
+{{#unless traefik }}
+    ports:
+      - "{{ ports.default }}:3001"
+{{/unless}}
+    volumes:
+      - "{{ volumes.data }}:/app/data"
+    labels:
+{{#if traefik }}
+      - "traefik.enable=true"
+      - "traefik.http.routers.{{ service }}.rule=Host(`{{ dns.subdomain }}.{{ dns.domain }}`)"
+      - "traefik.http.routers.{{ service }}.entrypoints=https"
+      - "traefik.http.routers.{{ service }}.tls=true"
+      - "traefik.http.services.{{ service }}.loadBalancer.server.port=3001"
+{{/if}}
+{{#if watchtower }}
+      - "com.centurylinklabs.watchtower.enable=true"
+{{/if}}
+    networks:
+{{#if networks.default.assignIp }}
+      aft-vnet:
+        ipv4_address: {{ networks.default.cidr.[0] }}.{{ networks.default.cidr.[1] }}.{{ networks.default.suffix }}
+{{else}}
+      - aft-vnet
+{{/if}}
+
+networks:
+  aft-vnet:
+    external: true
+    name: {{ networks.default.name }}

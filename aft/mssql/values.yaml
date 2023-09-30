@@ -1,0 +1,22 @@
+restart: unless-stopped
+hostname: mssql
+
+ports:
+  default: 1433
+
+dns:
+  subdomain: traefik
+
+mssql:
+  pid: "Developer"
+
+healthcheck:
+  timeout: 45s
+  interval: 10s
+  retries: 10
+  startPeriod: 90s
+
+networks:
+  default:
+    assignIp: true
+    suffix: "0.31"

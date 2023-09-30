@@ -5,9 +5,10 @@ docker.
 
 Aft may grow into a docker compose package manager.
 
-
 Aft uses handlebars and keepass to enable docker compose templates with the ability to dynamically generate secrets as
 needed for services in docker compose files.
+
+
 
 ## Install
 

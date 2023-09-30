@@ -1,0 +1,10 @@
+name: gotify
+description: |
+  a simple server for sending and receiving messages.
+service: gotify
+version: "0.0.1"
+# https://github.com/gotify/server/tags
+site: https://gotify.net/
+image: 
+  name: gotify/server
+  tag: latest

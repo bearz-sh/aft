@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  gotify:
+    image: {{ image.name }}:{{ image.tag }}
+    container_name: {{ service }}
+    hostname: {{ hostname }}
+    restart: {{ restart }}
+    environment:
+      TZ: {{ tz }}
+      PUID: {{ puid }}
+      PGID: {{ pgid }}
+      GOTIFY_DEFAULTUSER_PASS: "${GOTIFY_DEFAULTUSER_PASS:-CHANGEm3}"
+{{#unless traefik }}
+    ports:
+      - "{{ ports.default }}:80"
+{{/unless}}
+    volumes:
+      - "{{ volumes.data }}:/app/data"
+    labels:
+{{#if traefik }}
+      - "traefik.enable=true"
+      - "traefik.http.routers.{{ service }}.entrypoints=http"
+      - "traefik.http.routers.{{ service }}.rule=Host(`{{ dns.subdomain }}.{{ dns.domain }}`)"
+      - "traefik.http.routers.{{ service }}-tls.entrypoints=https"
+      - "traefik.http.routers.{{ service }}-tls.rule=Host(`{{ dns.subdomain }}.{{ dns.domain }}`)"
+      - "traefik.http.routers.{{ service }}-tls.tls=true"
+{{/if}}
+{{#if watchtower }}
+      - "com.centurylinklabs.watchtower.enable=true"
+{{/if}}
+    networks:
+{{#if networks.default.assignIp }}
+      aft-vnet:
+        ipv4_address: {{ networks.default.cidr.[0] }}.{{ networks.default.cidr.[1] }}.{{ networks.default.suffix }}
+{{else}}
+      - aft-vnet
+{{/if}}
+
+networks:
+  aft-vnet:
+    external: true
+    name: {{ networks.default.name }}

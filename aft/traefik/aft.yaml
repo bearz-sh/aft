@@ -1,0 +1,10 @@
+name: traefik
+description: |
+  Traefik Enterprise is a unified API Gateway and Ingress that
+  simplifies the discovery, security, and deployment of APIs and microservices.
+service: traefik
+version: "0.0.1"
+site: https://traefik.io/
+image: 
+  name: traefik
+  tag: latest

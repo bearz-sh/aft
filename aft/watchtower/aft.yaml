@@ -1,0 +1,9 @@
+name: watchtower
+description: |
+  A container-based solution for automating Docker container base image updates.
+service: watchtower
+version: "0.0.1"
+site: https://containrrr.dev/watchtower/
+image: 
+  name: containrrr/watchtower
+  tag: latest

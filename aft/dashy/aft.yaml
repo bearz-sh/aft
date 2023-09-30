@@ -1,0 +1,10 @@
+name: dashy
+description: |
+  The Ultimate Homepage for your Homelab
+service: dashy
+version: "0.0.1"
+# https://github.com/gotify/server/tags
+site: https://dashy.to/
+image: 
+  name: lissy93/dashy
+  tag: latest

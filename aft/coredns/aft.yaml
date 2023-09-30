@@ -1,0 +1,8 @@
+name: coredns
+description: "A extensible DNS server written in go."
+service: coredns
+version: "0.0.1"
+site: https://coredns.io/
+image: 
+  name: coredns/coredns
+  tag: latest

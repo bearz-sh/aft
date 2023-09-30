@@ -1,0 +1,28 @@
+services:
+  coredns:
+    image: {{ image.name }}:{{ image.tag }}
+    container_name: {{ service }}
+    restart: {{ restart }}
+    command: {{ command}}
+    environment:
+      TZ: {{ tz }}
+      PUID: {{ puid }}
+      PGID: {{ pgid }}
+    ports:
+      - "{{ host.ip }}:53:53/udp"
+      - "{{ host.ip }}:53:53"
+    volumes:
+      - {{ volumes.etc }}:/root
+      - {{ volumes.certs }}:/etc/certs
+    networks:
+{{#if networks.default.assignIp }}
+      aft-vnet:
+        ipv4_address: {{ networks.default.cidr[0] }}.{{ networks.default.cidr[1] }}.{{ networks.default.suffix }}
+{{else}}
+      - aft-vnet
+{{/if}}
+
+networks:
+  aft-vnet:
+    external: true
+    name: {{ networks.default.name }}

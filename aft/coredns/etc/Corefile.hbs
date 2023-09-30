@@ -1,0 +1,27 @@
+.:53 {
+    file /root/db.aft {{ dns.domain }}
+    forward {{ dns.forward }}
+    log
+    errors
+    whoami
+}
+
+{{#if dns.tls }}
+tls://.:5553 {
+	tls {{ dns.certs }}
+	file /root/db.aft {{ dns.domain }}
+    forward {{ dns.forward }}
+    log
+    errors
+    whoami
+}
+
+https://. {
+	tls {{ dns.certs }}
+	file /root/db.aft {{ dns.domain }}
+    forward {{ dns.forward}}
+    log
+    errors
+    whoami
+}
+{{/if}}

@@ -1,0 +1,16 @@
+restart: unless-stopped
+hostname: uptime-kuma
+dns:
+  subdomain: uptime-kuma
+
+# only used if traefik is disabled
+ports:
+  default: 44352
+
+traefik: true
+watchtower: true
+
+networks:
+  default:
+    assignIp: true
+    suffix: "0.52"
