@@ -35,6 +35,7 @@ export interface IAftConfig extends Record<string, unknown> {
         config: string;
     };
     mkcert: {
+        enabled: boolean;
         domains: string[];
     };
     network: {
@@ -44,6 +45,7 @@ export interface IAftConfig extends Record<string, unknown> {
     };
     sops: {
         enabled: boolean;
+        provider: string;
         recipient?: string;
     };
 }

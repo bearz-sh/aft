@@ -12,7 +12,13 @@ export class ExecutionContext implements IExecutionContext {
     readonly cache: IPackageCache;
     readonly globalPackagesDir: string;
 
-    constructor(secureStore: ISecretStore, config: IAftConfig, host: IHostWriter, cache: IPackageCache, globalPackagesDir: string) {
+    constructor(
+        secureStore: ISecretStore,
+        config: IAftConfig,
+        host: IHostWriter,
+        cache: IPackageCache,
+        globalPackagesDir: string,
+    ) {
         this.secretStore = secureStore;
         this.config = config;
         this.host = host;

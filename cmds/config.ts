@@ -1,12 +1,12 @@
-import { Command, blue } from "../cli_deps.ts";
+import { blue, Command } from "../cli_deps.ts";
 import { getLocation, importOverrides, load } from "../config/mod.ts";
-import { hostWriter, } from "../deps.ts";
+import { hostWriter } from "../deps.ts";
 
 export const createCommand = new Command()
     .description("creates a new aft config file if one does not exist")
     .action(async () => {
-         await load();
-         hostWriter.writeLine("config file is located at " + blue(getLocation()));
+        await load();
+        hostWriter.writeLine("config file is located at " + blue(getLocation()));
     });
 
 export const importCommand = new Command()
@@ -23,7 +23,6 @@ export const getCommand = new Command()
     .description("gets a config value in the aft config file")
     .arguments("<path:string>")
     .action(async (_o?: unknown, path?: string) => {
-        
         const config = await load();
         if (!path || path === "") {
             hostWriter.writeLine(JSON.stringify(config, null, 4));
@@ -32,7 +31,7 @@ export const getCommand = new Command()
 
         const segments = path.split(".");
         let value: unknown = config;
-        for(let i = 0; i < segments.length; i++) {
+        for (let i = 0; i < segments.length; i++) {
             const segment = segments[i];
             if (value === undefined || value === null) {
                 hostWriter.error(`config value ${path} not found`);
@@ -53,7 +52,7 @@ export const getCommand = new Command()
                 value = value[index];
                 continue;
             }
-            
+
             if (value === undefined) {
                 hostWriter.error(`config value ${path} not found`);
                 return;
@@ -66,8 +65,8 @@ export const getCommand = new Command()
 export const configCommand = new Command()
     .description("config shows the config location for aft and may have sub commands in the future")
     .option("-s, --short [short:boolean]", "only show the location of the config file")
-    .action(({short}) => {
-        if(short) {
+    .action(({ short }) => {
+        if (short) {
             hostWriter.writeLine(getLocation());
             return;
         }

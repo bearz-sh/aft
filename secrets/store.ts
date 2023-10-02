@@ -18,8 +18,14 @@ import { load } from "../config/mod.ts";
 
 export async function getKdbxLocation() {
     const config = await load();
-    const dir = get("AFT_KEEPASS") || join(config.paths.data, "etc");
+    const dir = get("AFT_KEEPASS") || join(config.paths.data, "etc", "aft");
     return join(dir, "aft.kdbx");
+}
+
+export async function getKdbxKeyLocation() {
+    const config = await load();
+    const keyFile = get("AFT_KEEPASS_KEYFILE") ?? join(config.paths.config, "aft.key");
+    return keyFile;
 }
 
 export async function getOrCreateKey() {
@@ -28,8 +34,8 @@ export async function getOrCreateKey() {
     if (envKey) {
         return new TextEncoder().encode(envKey);
     }
-    const config = await load();
-    const keyFile = get("AFT_KEEPASS_KEYFILE") ?? join(config.paths.data, "etc", "key.bin");
+
+    const keyFile = await getKdbxKeyLocation();
     const dir = dirname(keyFile);
     if (!await exists(dir)) {
         await ensureDirectory(dir);
@@ -41,7 +47,7 @@ export async function getOrCreateKey() {
 
     const key = secretGenerator.generateAsUint8Array(33);
     await writeFile(keyFile, key);
-    hostWriter.warn(`Backup your new key file at ${keyFile}}`);
+    hostWriter.warn(`Backup your new key file at ${keyFile}`);
     return key;
 }
 
@@ -88,10 +94,10 @@ export class KeePassSecretStore implements ISecretStore {
     list(): Promise<string[]> {
         const names: string[] = [];
         for (const entry of this.#db.db.getDefaultGroup().allEntries()) {
-            const tree : string[] = [];
+            const tree: string[] = [];
             let parent = entry.parentGroup;
-            while(parent) {
-                if (!parent || !parent.name || parent.name === "Root" ) {
+            while (parent) {
+                if (!parent || !parent.name || parent.name === "Root") {
                     break;
                 }
                 tree.push(parent.name);
@@ -133,7 +139,6 @@ export async function getOrCreateDefaultKdbx() {
     const credentials = createKdbxCredentials(secret);
     if (await exists(kdbxFile)) {
         defaultKdbx = await KpDatabase.open(kdbxFile, credentials);
-       
     } else {
         defaultKdbx = await KpDatabase.create(kdbxFile, credentials);
     }
@@ -142,7 +147,6 @@ export async function getOrCreateDefaultKdbx() {
 }
 
 export async function importSecrets(importFile: string, overwrite = false) {
-    
     if (!await exists(importFile)) {
         throw new Error(`Import file ${importFile} does not exist`);
     }
@@ -156,7 +160,7 @@ export async function importSecrets(importFile: string, overwrite = false) {
     const records = unknownJson as ISecretsImportSection[];
     const db = await getOrCreateDefaultKdbx();
 
-    for(let i = 0; i < records.length; i++) {
+    for (let i = 0; i < records.length; i++) {
         const r = records[i];
         if (!r.path) {
             throw new Error(`Import file ${importFile} record ${i} has no path`);

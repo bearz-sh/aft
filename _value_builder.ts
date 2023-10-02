@@ -27,7 +27,7 @@ export class ValueBuilder {
                 etc: `${dataDir}/etc/${service}`,
                 data: `${dataDir}/data/${service}`,
                 certs: `${dataDir}/etc/certs`,
-                logs: `${dataDir}/var/logs/${service}`,
+                logs: `${dataDir}/var/log/${service}`,
                 tmp: `${dataDir}/var/tmp/${service}`,
                 cache: `${dataDir}/var/cache/${service}`,
             },

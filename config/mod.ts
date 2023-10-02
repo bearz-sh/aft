@@ -10,6 +10,7 @@ export function createDefaults() {
         },
         sops: {
             enabled: true,
+            provider: "age",
         },
         defaults: {
             dns: {
@@ -31,6 +32,7 @@ export function createDefaults() {
             gateway: "172.19.0.1",
         },
         mkcert: {
+            enabled: true,
             domains: [
                 "*.aft.bearz.casa",
                 "aft.bearz.casa",
@@ -57,9 +59,9 @@ export async function loadPackageCache(path?: string) {
     if (!await exists(path!)) {
         await makeDirectory(dir, { recursive: true });
 
-        const settings : IPackageCache = {
+        const settings: IPackageCache = {
             entries: [],
-        }
+        };
         const json = JSON.stringify(settings, null, 4);
         await writeTextFile(path!, json);
 
